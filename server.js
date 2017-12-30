@@ -43,3 +43,37 @@ app.use('/graphql', graphqlHTTP({
 }));
 
 app.listen(8080, () => console.log('Running server on localhost:8080/graphql'));
+
+//
+// mutation {
+//   createFriend(input: {
+//     firstName: "Roman",
+//       lastName: "Brito",
+//       gender: "Male",
+//       language: "english",
+//       email: "romanbrito1@gmail.com"
+//   }){
+//     id
+//   }
+// }
+//
+// query {
+//   getFriend(id: "c590bafb1d4ea130901a"){
+//     firstName
+//     lastName
+//     gender
+//   }
+// }
+//
+// mutation {
+//   updateFriend(id: "c590bafb1d4ea130901a", input: {
+//     firstName: "Manuel"
+//     lastName: "Perez"
+//     gender: "male"
+//     language: "spanish"
+//     email: "dasf@gmail.com"
+//   }){
+//     firstName
+//     language
+//   }
+// }
