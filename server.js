@@ -1,79 +1,44 @@
 import express from 'express';
 import graphqlHTTP from 'express-graphql';
 import schema from './schema';
+import path from 'path';
+import webpack from 'webpack';
+import WebPackDevServer from 'webpack-dev-server';
+import { schema } from './data/database'; // keep looking for this
 
-const app = express();
+const APP_PORT = 3000;
+const GRAPHQL_PORT = 8080;
 
-app.get('/', (req, res) => {
-  res.send('GraphQL and Relay modern are cool!!');
+// GraphQL server
+const graphQLServer = express();
+graphQLServer.use('/', graphqlHTTP({
+  schema: schema,
+  pretty: true,
+  graphiql: true,
+}));
+graphQLServer.listen(GRAPHQL_PORT, () => console.log(`GraphQL server on localhost:${GRAPHQL_PORT}`));
+
+// Relay
+const compiler = webpack({
+  entry:['whatwg-fetch', path.resolve(__dirname, 'src', 'App.js')],
+  module: {
+    loaders: [
+      {
+        exclude: /node_modules/,
+        loader: 'babel-loader',
+        test: /\.js$/,
+      },
+    ],
+  },
+  output: {filename: 'App.js', path: '/'}
 });
 
-class Friend {
-   constructor(id, {firstName, lastName, gender, language, email}) {
-     this.id = id;
-     this.firstName = firstName;
-     this.lastName = lastName;
-     this.gender = gender;
-     this.language = language;
-     this.email = email;
-   }
-}
+const app = new WebPackDevServer(compiler, {
+  contentBase: '/public/',
+  proxy: {'/graphql': `http://localshot:${APP_PORT}`},
+  publicPath: '/src/',
+  stats: {colors: true},
+});
 
-const friendDatabase = {};
-
-const global = {
-  getFriend: ({id}) => {
-    return new Friend(id, friendDatabase[id]);
-  },
-  createFriend: ({input}) => {
-    let id = require('crypto').randomBytes(10).toString('hex');
-    friendDatabase[id] = input;
-    return new Friend(id, input);
-  },
-  updateFriend: ({id, input}) => {
-    friendDatabase[id] = input;
-    return new Friend(id, input);
-  }
-};
-
-app.use('/graphql', graphqlHTTP({
-  schema: schema,
-  rootValue: global,
-  graphiql: true, //gui
-}));
-
-app.listen(8080, () => console.log('Running server on localhost:8080/graphql'));
-
-//
-// mutation {
-//   createFriend(input: {
-//     firstName: "Roman",
-//       lastName: "Brito",
-//       gender: "Male",
-//       language: "english",
-//       email: "romanbrito1@gmail.com"
-//   }){
-//     id
-//   }
-// }
-//
-// query {
-//   getFriend(id: "c590bafb1d4ea130901a"){
-//     firstName
-//     lastName
-//     gender
-//   }
-// }
-//
-// mutation {
-//   updateFriend(id: "c590bafb1d4ea130901a", input: {
-//     firstName: "Manuel"
-//     lastName: "Perez"
-//     gender: "male"
-//     language: "spanish"
-//     email: "dasf@gmail.com"
-//   }){
-//     firstName
-//     language
-//   }
-// }
+app.use('/', express.static(path.resolve(__dirname, 'public')));
+app.listen(APP_PORT, () => console.log(`App is now running on localhost:${APP_PORT}`));
