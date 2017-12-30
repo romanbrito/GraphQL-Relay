@@ -41,3 +41,18 @@ const app = new WebPackDevServer(compiler, {
 
 app.use('/', express.static(path.resolve(__dirname, 'public')));
 app.listen(APP_PORT, () => console.log(`App is now running on localhost:${APP_PORT}`));
+
+//
+// query {
+//   viewer {
+//     friends {
+//       edges {
+//         node {
+//           firstName
+//           lastName
+//           language
+//         }
+//       }
+//     }
+//   }
+// }
