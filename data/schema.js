@@ -23,6 +23,26 @@ import {
   getViewer,
 } from './database';
 
+const {nodeInterface, nodeField} = nodeDefinitions(
+  (globalId) => {
+    const {type, id} = fromGlobalId(globalId);
+    if (type === 'Friend') {
+      return getFriend(id);
+    } else if (type === 'User') {
+      return getUser(id);
+    }
+    return null
+  },
+  (obj) => {
+    if (obj instanceof Friend) {
+      return GraphQLFriend;
+    } else if (obj instanceof User) {
+      return GraphQLUser;
+    }
+    return null;
+  }
+);
+
 const GraphQLUser = new GraphQLObjectType({
   name: 'User',
   fields: () => ({
@@ -60,4 +80,22 @@ const GraphQLFriend = new GraphQLObjectType({
     },
   }),
   interface: [nodeInterface],
+});
+
+const { connectionType: friendsConnection } =
+  connectionDefinitions({ name: 'Friend', nodeType: GraphQLFriend });
+
+const Query = new GraphQLObjectType({
+  name: 'Query',
+  fields: () => ({
+    node: nodeField,
+    viewer: {
+      type: GraphQLUser,
+      resolve: () => getViewer(),
+    },
+  }),
+});
+
+export const schema = new GraphQLSchema({
+  query: Query,
 });
